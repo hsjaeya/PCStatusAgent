@@ -1,6 +1,7 @@
 ﻿using PCStatusAgent.Models;
 using Supabase;
 using Supabase.Realtime.PostgresChanges;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static Supabase.Realtime.PostgresChanges.PostgresChangesOptions;
 
@@ -66,6 +67,16 @@ public class SupabaseService
                     if (command.CommandType == "lock")
                     {
                         LockWorkStation();
+                        await MarkExecutedAsync(command.Id);
+                    }
+                    else if (command.CommandType == "restart")
+                    {
+                        Process.Start("shutdown", "/r /t 0");
+                        await MarkExecutedAsync(command.Id);
+                    }
+                    else if (command.CommandType == "shutdown")
+                    {
+                        Process.Start("shutdown", "/s /t 0");
                         await MarkExecutedAsync(command.Id);
                     }
                 }
