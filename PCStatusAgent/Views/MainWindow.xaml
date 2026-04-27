@@ -1,0 +1,25 @@
+﻿<Window x:Class="PCStatusAgent.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PC Status Agent" Height="200" Width="350"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="PC Status Agent 실행 중"
+                   FontSize="16" FontWeight="Bold"
+                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <TextBlock Grid.Row="1" x:Name="StatusText"
+                   Text="명령 대기 중..."
+                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+        <Button Grid.Row="2" Content="창 최소화" Height="35"
+                Click="MinimizeBtn_Click"/>
+    </Grid>
+</Window>
