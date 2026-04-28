@@ -3,6 +3,7 @@ using Supabase;
 using Supabase.Realtime.PostgresChanges;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using static Supabase.Realtime.PostgresChanges.PostgresChangesOptions;
 
 namespace PCStatusAgent.Services;
@@ -38,7 +39,6 @@ public class SupabaseService
 
         System.Diagnostics.Debug.WriteLine("폴링 시작");
 
-        // 하트비트 시작
         _ = StartHeartbeatAsync();
 
         while (true)
@@ -90,7 +90,6 @@ public class SupabaseService
         }
     }
 
-    // 30초마다 온라인 상태 업데이트
     private readonly HardwareService _hardware = new();
 
     private async Task StartHeartbeatAsync()
@@ -106,6 +105,30 @@ public class SupabaseService
                     var temp = _hardware.GetCpuTemperature();
                     var (ramUsed, ramTotal, ramPercent) = _hardware.GetRamInfo();
 
+                    // 프로세스 목록 수집
+                    var processes = Process.GetProcesses()
+                        .OrderByDescending(p => {
+                            try { return p.WorkingSet64; } catch { return 0; }
+                        })
+                        .Take(10)
+                        .Select(p => {
+                            try
+                            {
+                                return new
+                                {
+                                    name = p.ProcessName,
+                                    memory = p.WorkingSet64 / 1024 / 1024
+                                };
+                            }
+                            catch
+                            {
+                                return new { name = p.ProcessName, memory = 0L };
+                            }
+                        })
+                        .ToList();
+
+                    var processesJson = JsonSerializer.Serialize(processes);
+
                     System.Diagnostics.Debug.WriteLine(
                         $"CPU: {cpu}%, 온도: {temp}°C, RAM: {ramUsed:F1}/{ramTotal:F1}GB ({ramPercent:F1}%)");
 
@@ -119,7 +142,8 @@ public class SupabaseService
                             RamUsed = ramUsed,
                             RamTotal = ramTotal,
                             RamPercent = ramPercent,
-                            PcName = Environment.MachineName
+                            PcName = Environment.MachineName,
+                            Processes = processesJson
                         });
 
                     System.Diagnostics.Debug.WriteLine("하트비트 전송");
@@ -139,7 +163,7 @@ public class SupabaseService
         if (_client == null) return;
 
         await _client.From<Command>()
-            .Where(c => c.Id == commandId)  
+            .Where(c => c.Id == commandId)
             .Set(c => c.IsExecuted, true)
             .Update();
     }

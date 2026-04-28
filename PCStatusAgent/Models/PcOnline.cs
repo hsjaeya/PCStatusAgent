@@ -32,4 +32,7 @@ public class PcOnline : BaseModel
 
     [Column("temperature")]
     public float? Temperature { get; set; }
+
+    [Column("processes")]
+    public string? Processes { get; set; }
 }
